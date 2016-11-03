@@ -1,8 +1,8 @@
-let request = require('request')
-let cheerio = require('cheerio')
-// let fs = require('fs')
+const request = require('request')
+const cheerio = require('cheerio')
+const fs = require('fs')
 
-let url = 'http://www.bluemooncamera.com/inventory.php?menuID=0&catID=100&deptID=141'
+const url = 'http://www.bluemooncamera.com/inventory.php?menuID=0&catID=100&deptID=141'
 
 request(url, function (err, res, html) {
   if (err) console.log('Request Error:', err)
@@ -12,13 +12,14 @@ request(url, function (err, res, html) {
   }
 })
 
-let results = []
+let results = {
+  items: []
+}
 
 function parseResponse (html) {
   let $ = cheerio.load(html)
-  let productsTable = $('#sub_right table')
-  let tableItems = productsTable.find('tr')
-  tableItems.each(function () {
+  let productTableItems = $('#sub_right table tr')
+  productTableItems.each(function () {
     let element = $(this)
     let descriptText = element.children().first().text()
     if (descriptText.includes('35')) {
@@ -26,8 +27,11 @@ function parseResponse (html) {
         description: descriptText,
         price: $(element.children()[1]).text()
       }
-      results.push(foundItem)
+      results.items.push(foundItem)
     }
   })
-  console.log(results)
+  fs.writeFile('results.json', JSON.stringify(results, null, 4), function (err) {
+    if (err) return console.log(err)
+    console.log('wrote results successfully')
+  })
 }
